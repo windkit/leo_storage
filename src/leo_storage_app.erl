@@ -132,6 +132,7 @@ after_proc({ok, Pid}) ->
     %% Launch servers
     ok = launch_logger(),
     ok = launch_object_storage(Pid),
+    ok = launch_storage_worker(Pid),
     ok = leo_ordning_reda_api:start(),
 
     %% Check the managers whether they are alive or not
@@ -263,6 +264,13 @@ launch_object_storage(RefSup) ->
     {ok, _} = supervisor:start_child(RefSup, ChildSpec),
     ok.
 
+launch_storage_worker(RefSup) ->
+    ok = wpool:start(),
+    ChildSpec = {leo_storage_worker,
+                 {leo_storage_worker, start_link, [[{name,leo_storage_worker}]]},
+                 permanent, 2000, worker, [leo_storage_worker]},
+    {ok, _} = supervisor:start_child(RefSup, ChildSpec),
+    ok.
 
 %% @doc Launch redundnat-manager
 %% @private

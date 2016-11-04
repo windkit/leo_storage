@@ -388,7 +388,10 @@ put_fun(Ref, AddrId, Key, Object) ->
     case leo_watchdog_state:find_not_safe_items(?WD_EXCLUDE_ITEMS) of
         not_found ->
             %% Put the object to the local object-storage
-            case leo_object_storage_api:put({AddrId, Key}, Object) of
+            case leo_storage_worker:enqueue(leo_storage_worker,
+                                            {leo_object_storage_api,
+                                             put,
+                                             [{AddrId, Key}, Object]}) of
                 {ok, ETag} ->
                     {ok, Ref, {etag, ETag}};
                 {error, ?ERROR_LOCKED_CONTAINER} ->
